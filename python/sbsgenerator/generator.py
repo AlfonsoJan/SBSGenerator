@@ -31,166 +31,174 @@ from .sbsgenerator import parse_vcf_files
 
 import itertools
 
+
 def generate_mutation_list():
-    """
-    Generate a list of mutations in the format 'C>A', 'C>G', etc.
-    
-    Returns:
-        list: A list of strings representing mutations.
-    """
-    bases = ["A", "C", "G", "T"]
-    mutations = ["C>A", "C>G", "C>T", "T>A", "T>C", "T>G"]
-    return [f"{y}[{x}]{m}" for x, y, m in itertools.product(mutations, bases, bases)]
+	"""
+	Generate a list of mutations in the format 'C>A', 'C>G', etc.
+
+	Returns:
+	    list: A list of strings representing mutations.
+	"""
+	bases = ["A", "C", "G", "T"]
+	mutations = ["C>A", "C>G", "C>T", "T>A", "T>C", "T>G"]
+	return [f"{y}[{x}]{m}" for x, y, m in itertools.product(mutations, bases, bases)]
 
 
 def create_sort_regex(context: int) -> str:
-    """
-    Create a regular expression pattern for sorting.
+	"""
+	Create a regular expression pattern for sorting.
 
-    Args:
-        context (int): The context size.
+	Args:
+	    context (int): The context size.
 
-    Returns:
-        str: The regular expression pattern for sorting.
-    """
-    n = context // 2
-    r_string = r"\w" * n + r"\[.*\]" + r"\w" * n
-    return rf"({r_string})"
+	Returns:
+	    str: The regular expression pattern for sorting.
+	"""
+	n = context // 2
+	r_string = r"\w" * n + r"\[.*\]" + r"\w" * n
+	return rf"({r_string})"
 
 
 def increase_mutations(context: int) -> list[str]:
-    """
-    Increases mutations in a given column based on a specified context.
+	"""
+	Increases mutations in a given column based on a specified context.
 
-    Args:
-        context (int): The context for increasing mutations.
+	Args:
+	    context (int): The context for increasing mutations.
 
-    Returns:
-        list: A list of increased mutations based on the specified context.
-    """
-    if context < 3:
-        raise ValueError("Context must be aleast 3")
-    nucleotides = ["A", "C", "G", "T"]
-    combinations = list(itertools.product(nucleotides, repeat=context - 3))
-    # Generate new mutations based on the context and combinations
-    new_mutations = [
-    f"{''.join(combo[:len(combo)//2])}{mut}{''.join(combo[len(combo)//2:])}"
-        for mut in generate_mutation_list()
-        for combo in combinations
-    ]
-    return new_mutations
+	Returns:
+	    list: A list of increased mutations based on the specified context.
+	"""
+	if context < 3:
+		raise ValueError("Context must be aleast 3")
+	nucleotides = ["A", "C", "G", "T"]
+	combinations = list(itertools.product(nucleotides, repeat=context - 3))
+	# Generate new mutations based on the context and combinations
+	new_mutations = [
+		f"{''.join(combo[:len(combo)//2])}{mut}{''.join(combo[len(combo)//2:])}"
+		for mut in generate_mutation_list()
+		for combo in combinations
+	]
+	return new_mutations
+
 
 class NoCorrectSBSMutationsFound(Exception):
-    """Exception raised when no correct SBS mutations are found."""
-    pass
+	"""Exception raised when no correct SBS mutations are found."""
+
+	pass
+
 
 class SBSGenerator:
-    def __init__(self, context: int, vcf_files: list[str], ref_genome: str) -> None:
-        """
-        Initialize the Generator object.
+	def __init__(self, context: int, vcf_files: list[str], ref_genome: str) -> None:
+		"""
+		Initialize the Generator object.
 
-        Args:
-            context (int): The context value.
-            vcf_files (list[str]): List of VCF file paths.
-            ref_genome (str): Path to the reference genome.
+		Args:
+		    context (int): The context value.
+		    vcf_files (list[str]): List of VCF file paths.
+		    ref_genome (str): Path to the reference genome.
 
-        Returns:
-            None
-        """
-        download.download_ref_genomes(Path(ref_genome))
-        self._logger = logging.SingletonLogger()
-        self.context = context
-        self.vcf_files = vcf_files
-        self.ref_genome = ref_genome
-        self.mutation_list: list = increase_mutations(context)
-        self.filtered_vcf, self.samples = self.parse_vcf_files(vcf_files)
-        self.samples_df = self.create_samples_df()
+		Returns:
+		    None
+		"""
+		download.download_ref_genomes(Path(ref_genome))
+		self._logger = logging.SingletonLogger()
+		self.context = context
+		self.vcf_files = vcf_files
+		self.ref_genome = ref_genome
+		self.mutation_list: list = increase_mutations(context)
+		self.filtered_vcf, self.samples = self.parse_vcf_files(vcf_files)
+		self.samples_df = self.create_samples_df()
 
-    @property
-    def count_samples(self) -> pd.DataFrame:
-        """
-        Returns the count of samples in the generator.
+	@property
+	def count_samples(self) -> pd.DataFrame:
+		"""
+		Returns the count of samples in the generator.
 
-        Returns:
-            pandas.DataFrame: A DataFrame with the count of samples per mutation type.
-        """
-        return self.samples_df.reset_index().rename(columns={"index": "MutationType"})
+		Returns:
+		    pandas.DataFrame: A DataFrame with the count of samples per mutation type.
+		"""
+		return self.samples_df.reset_index().rename(columns={"index": "MutationType"})
 
-    def parse_vcf_files(self, vcf_files) -> tuple[np.ndarray, np.ndarray]:
-        """
-        Parses the given VCF files and returns the filtered VCF data and unique samples.
+	def parse_vcf_files(self, vcf_files) -> tuple[np.ndarray, np.ndarray]:
+		"""
+		Parses the given VCF files and returns the filtered VCF data and unique samples.
 
-        Args:
-            vcf_files (list): A list of VCF file paths.
+		Args:
+		    vcf_files (list): A list of VCF file paths.
 
-        Returns:
-            tuple: A tuple containing the filtered VCF data and unique samples.
-        """
-        self._logger.log_info("Parsing VCF files")
-        filtered_vcf = parse_vcf_files(vcf_files, str(self.ref_genome), self.context)
-        if filtered_vcf.shape[0] == 0:
-            raise NoCorrectSBSMutationsFound("No correct SBS mutations found in VCF files")
-        samples = np.unique(filtered_vcf[:, 0])
-        self._logger.log_info("Done parsing VCF files")
-        return filtered_vcf, samples
-    
-    def create_samples_df(self) -> None:
-        """
-        Create a DataFrame with zeros, representing the samples and mutations.
+		Returns:
+		    tuple: A tuple containing the filtered VCF data and unique samples.
+		"""
+		self._logger.log_info("Parsing VCF files")
+		filtered_vcf = parse_vcf_files(vcf_files, str(self.ref_genome), self.context)
+		if filtered_vcf.shape[0] == 0:
+			raise NoCorrectSBSMutationsFound("No correct SBS mutations found in VCF files")
+		samples = np.unique(filtered_vcf[:, 0])
+		self._logger.log_info("Done parsing VCF files")
+		return filtered_vcf, samples
 
-        Returns:
-            pd.DataFrame: A DataFrame with zeros, with columns representing the samples and
-                          rows representing the mutations.
-        """
-        samples_df = np.zeros((len(self.mutation_list), len(self.samples)))
-        return pd.DataFrame(samples_df, columns=self.samples, index=self.mutation_list)
-    
-    def _calculate_partition_size(self, df: pd.DataFrame) -> int:
-        """
-        Calculates the partition size for a given DataFrame.
+	def create_samples_df(self) -> None:
+		"""
+		Create a DataFrame with zeros, representing the samples and mutations.
 
-        Args:
-            df (pd.DataFrame): The DataFrame to calculate the partition size for.
+		Returns:
+		    pd.DataFrame: A DataFrame with zeros, with columns representing the samples and
+		                  rows representing the mutations.
+		"""
+		samples_df = np.zeros((len(self.mutation_list), len(self.samples)))
+		return pd.DataFrame(samples_df, columns=self.samples, index=self.mutation_list)
 
-        Returns:
-            int: The partition size for the given DataFrame.
-        """
-        total_data_size_in_bytes = df.memory_usage(deep=True).sum()
-        target_partition_size_in_bytes = 100 * 1024**2  # 100MB
-        return max(1, math.ceil(total_data_size_in_bytes / target_partition_size_in_bytes))
-    
-    def count_mutations(self) -> None:
-        """
-        Counts the mutations in the filtered VCF data and updates the samples dataframe.
+	def _calculate_partition_size(self, df: pd.DataFrame) -> int:
+		"""
+		Calculates the partition size for a given DataFrame.
 
-        Returns:
-            None
-        """
-        self._logger.log_info("Counting mutations")
-        # Create a DataFrame from filtered VCF data
-        df_vcf = pd.DataFrame(self.filtered_vcf, columns=["Sample", "MutationType"])
-        npartitions = self._calculate_partition_size(df_vcf)
-        # Convert DataFrame to Dask DataFrame
-        ddf_vcf = dd.from_pandas(df_vcf, npartitions=npartitions)
-        # Group by 'Sample' and 'MutationType' and count the occurrences
-        # Convert counts to DataFrame and reset index
-        counts_df = ddf_vcf.groupby(["Sample", "MutationType"]).size().to_frame(name='Count').reset_index()
-        # Convert 'Sample' and 'MutationType' columns to categorical type
-        counts_df['Sample'] = counts_df['Sample'].astype('category').cat.as_known()
-        counts_df['MutationType'] = counts_df['MutationType'].astype('category').cat.as_known()
-        # Pivot the DataFrame to get mutation counts per sample and mutation type
-        pivot_df = counts_df.pivot_table(index='MutationType', columns='Sample', values='Count', aggfunc='sum').fillna(0)
-        # Compute the pivot DataFrame
-        result_df = pivot_df.compute()
-        # Update the samples DataFrame with the mutation counts
-        self.samples_df.update(result_df)
-        self._logger.log_info("Mutation counting done")
-    
-    def __repr__(self) -> str:
-        """
-        Returns a string representation of the SBSGenerator object.
+		Args:
+		    df (pd.DataFrame): The DataFrame to calculate the partition size for.
 
-        Returns:
-            str: A string representation of the SBSGenerator object.
-        """
-        return f"SBSGenerator(context={self.context}, vcf_files={self.vcf_files}, ref_genome={self.ref_genome})"
+		Returns:
+		    int: The partition size for the given DataFrame.
+		"""
+		total_data_size_in_bytes = df.memory_usage(deep=True).sum()
+		target_partition_size_in_bytes = 100 * 1024**2  # 100MB
+		return max(1, math.ceil(total_data_size_in_bytes / target_partition_size_in_bytes))
+
+	def count_mutations(self) -> None:
+		"""
+		Counts the mutations in the filtered VCF data and updates the samples dataframe.
+
+		Returns:
+		    None
+		"""
+		self._logger.log_info("Counting mutations")
+		# Create a DataFrame from filtered VCF data
+		df_vcf = pd.DataFrame(self.filtered_vcf, columns=["Sample", "MutationType"])
+		npartitions = self._calculate_partition_size(df_vcf)
+		# Convert DataFrame to Dask DataFrame
+		ddf_vcf = dd.from_pandas(df_vcf, npartitions=npartitions)
+		# Group by 'Sample' and 'MutationType' and count the occurrences
+		# Convert counts to DataFrame and reset index
+		counts_df = (
+			ddf_vcf.groupby(["Sample", "MutationType"]).size().to_frame(name="Count").reset_index()
+		)
+		# Convert 'Sample' and 'MutationType' columns to categorical type
+		counts_df["Sample"] = counts_df["Sample"].astype("category").cat.as_known()
+		counts_df["MutationType"] = counts_df["MutationType"].astype("category").cat.as_known()
+		# Pivot the DataFrame to get mutation counts per sample and mutation type
+		pivot_df = counts_df.pivot_table(
+			index="MutationType", columns="Sample", values="Count", aggfunc="sum"
+		).fillna(0)
+		# Compute the pivot DataFrame
+		result_df = pivot_df.compute()
+		# Update the samples DataFrame with the mutation counts
+		self.samples_df.update(result_df)
+		self._logger.log_info("Mutation counting done")
+
+	def __repr__(self) -> str:
+		"""
+		Returns a string representation of the SBSGenerator object.
+
+		Returns:
+		    str: A string representation of the SBSGenerator object.
+		"""
+		return f"SBSGenerator(context={self.context}, vcf_files={self.vcf_files}, ref_genome={self.ref_genome})"
