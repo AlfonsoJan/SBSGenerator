@@ -15,8 +15,6 @@ dependencies = [
     "requests == 2.31.0",
     "dask == 2024.1.1",
     "pandas == 1.5.0",
-    "pyarrow == 14.0.1",
-    "fastparquet == 2023.10.1"
 ]
 
 [project.optional-dependencies]
