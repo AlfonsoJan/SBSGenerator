@@ -21,6 +21,7 @@ mutations and their implications in various biological contexts.
 import itertools
 from pathlib import Path
 import math
+from functools import wraps
 
 import numpy as np
 import pandas as pd
@@ -82,26 +83,56 @@ def increase_mutations(context: int) -> list[str]:
 	return new_mutations
 
 
-class NoCorrectSBSMutationsFound(Exception):
+class NotCorrectSBSMutationsFound(Exception):
 	"""Exception raised when no correct SBS mutations are found."""
 
 	pass
 
 
+class NotADirectoryError(Exception):
+	"""Exception raised when the argument is not a folder."""
+
+	pass
+
+
+def validate_input(func):
+	@wraps(func)
+	def wrapper(context, vcf_files, ref_genome, **kwargs):
+		# Check if context is an odd number greater than 1 and an integer
+		if not isinstance(context, int) or context < 2 or context % 2 == 0:
+			raise ValueError("Context must be an odd number greater than 1.")
+		# Ensure vcf_files is a list or tuple
+		if not isinstance(vcf_files, (list, tuple)):
+			raise TypeError("Input 'vcf_files' must be a list or tuple.")
+		# Verify that vcf_files contain existing file paths
+		exist_vcf_files = [str(vcf_file) for vcf_file in vcf_files if Path(vcf_file).exists()]
+		if len(exist_vcf_files) < len(vcf_files):
+			missing_files = set(vcf_files) - set(exist_vcf_files)
+			raise FileNotFoundError(f"The following files do not exist: {', '.join(missing_files)}")
+		# Normalize ref_genome to a Path object, ensuring it exists
+		ref_genome_path = Path(ref_genome)
+		if not ref_genome_path.is_dir():
+			raise NotADirectoryError("This argument must be a folder.")
+		return func(context, vcf_files, ref_genome_path, **kwargs)
+
+	return wrapper
+
+
+@validate_input
 class SBSGenerator:
-	def __init__(self, context: int, vcf_files: list[str], ref_genome: str) -> None:
+	def __init__(self, context: int, vcf_files: list[str], ref_genome: Path) -> None:
 		"""
 		Initialize the Generator object.
 
 		Args:
 		    context (int): The context value.
 		    vcf_files (list[str]): List of VCF file paths.
-		    ref_genome (str): Path to the reference genome.
+		    ref_genome (Path): Path to the reference genome.
 
 		Returns:
 		    None
 		"""
-		download.download_ref_genomes(Path(ref_genome))
+		download.download_ref_genomes(ref_genome)
 		self._logger = logging.SingletonLogger()
 		self.context = context
 		self.vcf_files = vcf_files
@@ -133,7 +164,7 @@ class SBSGenerator:
 		self._logger.log_info("Parsing VCF files")
 		filtered_vcf = parse_vcf_files(vcf_files, str(self.ref_genome), self.context)
 		if filtered_vcf.shape[0] == 0:
-			raise NoCorrectSBSMutationsFound("No correct SBS mutations found in VCF files")
+			raise NotCorrectSBSMutationsFound("No correct SBS mutations found in VCF files")
 		samples = np.unique(filtered_vcf[:, 0])
 		self._logger.log_info("Done parsing VCF files")
 		return filtered_vcf, samples
