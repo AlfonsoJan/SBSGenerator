@@ -1,9 +1,16 @@
-[![Docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://osf.io/t6j7u/wiki/home/) 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<!-- [![Docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://osf.io/t6j7u/wiki/home/) 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) -->
 
-# SBSGenerator
+<h2 align="center">SBSGenerator</h2>
 
-SBSGenerator is a comprehensive Python package designed for bioinformaticians and researchers working in the field of genomics. This package offers a robust set of tools for generating, analyzing, and interpreting single base substitutions (SBS) mutations from Variant Call Format (VCF) files. With a focus on ease of use, efficiency, and scalability, SBSGenerator facilitates the detailed study of genomic mutations, aiding in the understanding of their roles in various biological processes and diseases. Uniquely developed using a hybrid of Python and Rust, SBSGenerator leverages the PyO3 library for seamless integration between Python's flexible programming capabilities and Rust's unparalleled performance. This innovative approach ensures that SBSGenerator is not only user-friendly but also incredibly efficient and capable of handling large-scale genomic data with ease.
+<p align="center">
+<a href="https://github.com/alfonsojan/sbsgenerator/actions"><img alt="Actions Status" src="https://github.com/alfonsojan/sbsgenerator/actions/workflows/deploy.yml/badge.svg"></a>
+<a href="https://github.com/alfonsojan/sbsgenerator/blob/main/LICENSE"><img alt="License: MIT" src="https://black.readthedocs.io/en/stable/_static/license.svg"></a>
+<a href="https://pypi.python.org/pypi/sbsgenerator/"><img alt="PyPI" src="https://img.shields.io/pypi/pyversions/sbsgenerator.svg"></a>
+<a href="https://github.com/alfonsojan/sbsgenerator/blob/main/LICENSE"><img alt="License: MIT" src="https://black.readthedocs.io/en/stable/_static/license.svg"></a>
+</p>
+
+_SBSGenerator_ is a comprehensive Python package designed for bioinformaticians and researchers working in the field of genomics. This package offers a robust set of tools for generating, analyzing, and interpreting single base substitutions (SBS) mutations from Variant Call Format (VCF) files. With a focus on ease of use, efficiency, and scalability, SBSGenerator facilitates the detailed study of genomic mutations, aiding in the understanding of their roles in various biological processes and diseases. Uniquely developed using a hybrid of Python and Rust, SBSGenerator leverages the PyO3 library for seamless integration between Python's flexible programming capabilities and Rust's unparalleled performance. This innovative approach ensures that SBSGenerator is not only user-friendly but also incredibly efficient and capable of handling large-scale genomic data with ease.
 
 - [Installation](#installation)
 - [Usage](#usage)
