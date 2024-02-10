@@ -49,7 +49,7 @@ def test_sbsgenerator_with_context(context_size: int, expected_shape: tuple[int,
 		3,  # For context size 3
 	],
 )
-def test_bad_sbsgenerator(context_size: int) -> None:
+def test_bad_vcf_sbsgenerator(context_size: int) -> None:
 	"""
 	Test case for the SBSGenerator class when no correct SBS mutations are found in VCF files.
 
@@ -57,13 +57,13 @@ def test_bad_sbsgenerator(context_size: int) -> None:
 	    context_size (int): The size of the context to consider for SBS mutations.
 
 	Raises:
-	    generator.NoCorrectSBSMutationsFound: If no correct SBS mutations are found in the VCF files.
+	    generator.NotCorrectSBSMutationsFound: If no correct SBS mutations are found in the VCF files.
 
 	Returns:
 	    None
 	"""
 	with pytest.raises(
-		generator.NoCorrectSBSMutationsFound,
+		generator.NotCorrectSBSMutationsFound,
 		match="No correct SBS mutations found in VCF files",
 	) as _:
 		sbsgen = generator.SBSGenerator(
@@ -72,3 +72,52 @@ def test_bad_sbsgenerator(context_size: int) -> None:
 			ref_genome=Path(__file__).parent / "files",
 		)
 		sbsgen.count_mutations()
+
+
+def test_bad_context() -> None:
+	"""
+	Test case for when the context is invalid.
+
+	This test ensures that a ValueError is raised when the context is not an odd number greater than 1.
+	"""
+	with pytest.raises(
+		ValueError,
+		match="Context must be an odd number greater than 1.",
+	) as _:
+		generator.SBSGenerator(
+			context=1,
+			vcf_files=[str(Path(__file__).parent / "files" / "bad_test.vcf")],
+			ref_genome=Path(__file__).parent / "files",
+		)
+
+
+def test_file_does_not_exist() -> None:
+	"""
+	Test case to verify that the SBSGenerator raises a FileNotFoundError
+	when the specified VCF file does not exist.
+	"""
+	vcf_file = str(Path(__file__).parent / "files" / "does_not_exist.vcf")
+	with pytest.raises(
+		FileNotFoundError,
+		match=f"The following files do not exist: {vcf_file}",
+	) as _:
+		generator.SBSGenerator(
+			context=3,
+			vcf_files=[vcf_file],
+			ref_genome=Path(__file__).parent / "files",
+		)
+
+
+def test_folder_is_a_file() -> None:
+	"""
+	Test case to verify that an exception is raised when the provided folder is actually a file.
+	"""
+	with pytest.raises(
+		generator.NotADirectoryError,
+		match=f"This argument must be a folder.",
+	) as _:
+		generator.SBSGenerator(
+			context=3,
+			vcf_files=[str(Path(__file__).parent / "files" / "bad_test.vcf")],
+			ref_genome=Path(__file__).parent / "files.txt",
+		)
