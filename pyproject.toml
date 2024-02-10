@@ -4,11 +4,32 @@ build-backend = "maturin"
 
 [project]
 name = "sbsgenerator"
+description = "Blazingly fast SBS matrix generator library"
+readme = "README.md"
+authors = [
+  { name = "Jan Alfonso Busker", email = "alfonsobusker@gmail.com" },
+]
+license = { file = "LICENSE" }
+repository = "https://github.com/AlfonsoJan/sbsgenerator"
 requires-python = ">=3.8"
+keywords = ["sbs", "matrix", "sbsgenerator", "Single Base Substitution", "bioinformatics", "genomics", "genetics", "biology", "sequence", "sequence analysis"]
 classifiers = [
-    "Programming Language :: Rust",
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: Implementation :: CPython",
-    "Programming Language :: Python :: Implementation :: PyPy",
+    "Programming Language :: Python",
+    "Programming Language :: Rust",
 ]
 dependencies = [
     "numpy == 1.23.1",
