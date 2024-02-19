@@ -39,6 +39,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/AlfonsoJan/sbsgenerator"
+Changelog = "https://github.com/AlfonsoJan/sbsgenerator/blob/main/CHANGES.md"
 
 [project.optional-dependencies]
 test = ["pytest"]

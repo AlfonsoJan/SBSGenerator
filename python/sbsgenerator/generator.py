@@ -33,7 +33,7 @@ from .sbsgenerator import parse_vcf_files
 import itertools
 
 
-def generate_mutation_list():
+def generate_mutation_list() -> list:
 	"""
 	Generate a list of mutations in the format 'C>A', 'C>G', etc.
 
@@ -60,7 +60,7 @@ def create_sort_regex(context: int) -> str:
 	return rf"({r_string})"
 
 
-def increase_mutations(context: int) -> list[str]:
+def increase_mutations(context: int) -> list:
 	"""
 	Increases mutations in a given column based on a specified context.
 
@@ -71,7 +71,7 @@ def increase_mutations(context: int) -> list[str]:
 	    list: A list of increased mutations based on the specified context.
 	"""
 	if context < 3:
-		raise ValueError("Context must be aleast 3")
+		raise ValueError("Context must be at least 3")
 	nucleotides = ["A", "C", "G", "T"]
 	combinations = list(itertools.product(nucleotides, repeat=context - 3))
 	# Generate new mutations based on the context and combinations
@@ -95,7 +95,23 @@ class NotADirectoryError(Exception):
 	pass
 
 
-def validate_input(func):
+def validate_input(func: callable) -> callable:
+	"""
+	Decorator function that validates the input parameters of the decorated function.
+
+	Args:
+		func (function): The function to be decorated.
+
+	Returns:
+		function: The decorated function.
+
+	Raises:
+		ValueError: If the 'context' parameter is not an odd number greater than 1.
+		TypeError: If the 'vcf_files' parameter is not a list or tuple.
+		FileNotFoundError: If any of the 'vcf_files' do not exist.
+		NotADirectoryError: If the 'ref_genome' parameter is not a valid directory.
+	"""
+
 	@wraps(func)
 	def wrapper(context, vcf_files, ref_genome, **kwargs):
 		# Check if context is an odd number greater than 1 and an integer

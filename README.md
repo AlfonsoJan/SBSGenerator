@@ -4,18 +4,14 @@
 <h2 align="center">SBSGenerator</h2>
 
 <p align="center">
+<a href="https://github.com/AlfonsoJan/sbsgenerator/"><img alt="Actions Status" src="https://img.shields.io/badge/docs-latest-blue.svg"></a>
 <a href="https://github.com/alfonsojan/sbsgenerator/actions"><img alt="Actions Status" src="https://github.com/alfonsojan/sbsgenerator/actions/workflows/deploy.yml/badge.svg"></a>
-<a href="https://github.com/alfonsojan/sbsgenerator/blob/main/LICENSE"><img alt="License: MIT" src="https://black.readthedocs.io/en/stable/_static/license.svg"></a>
+<a href="https://pypi.org/project/sbsgenerator/"><img alt="PyPI" src="https://img.shields.io/pypi/v/sbsgenerator"></a>
 <a href="https://pypi.python.org/pypi/sbsgenerator/"><img alt="PyPI" src="https://img.shields.io/pypi/pyversions/sbsgenerator.svg"></a>
 <a href="https://github.com/alfonsojan/sbsgenerator/blob/main/LICENSE"><img alt="License: MIT" src="https://black.readthedocs.io/en/stable/_static/license.svg"></a>
 </p>
 
 _SBSGenerator_ is a comprehensive Python package designed for bioinformaticians and researchers working in the field of genomics. This package offers a robust set of tools for generating, analyzing, and interpreting single base substitutions (SBS) mutations from Variant Call Format (VCF) files. With a focus on ease of use, efficiency, and scalability, SBSGenerator facilitates the detailed study of genomic mutations, aiding in the understanding of their roles in various biological processes and diseases. Uniquely developed using a hybrid of Python and Rust, SBSGenerator leverages the PyO3 library for seamless integration between Python's flexible programming capabilities and Rust's unparalleled performance. This innovative approach ensures that SBSGenerator is not only user-friendly but also incredibly efficient and capable of handling large-scale genomic data with ease.
-
-- [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## Installation
 
@@ -35,6 +31,25 @@ The `SBSGenerator` package is designed to facilitate the generation and analysis
 - Context 7: The dataframe contains all of the following the pyrimidine single nucleotide variants, NNN[{C > A, G, or T} or {T > A, G, or C}]NNN.
 *64 (4x4x4) nucleotides x 6 pyrimidine variants x 64 (4x4x4) possible ending dinucleotides = 24576 total combinations.*
 
+### VCF INPUT FILE FORMAT
+
+This tool currently only supports vcf formats. The user must provide variant data adhering to the format. The input VCF (Variant Call Format) file should adhere to the following format:
+
+| Name | Fullname | Datatypes |
+|:-:|:-:|:-:|
+| Type | Represents the type of mutation. | str |
+| Gene | Indicates the specific gene associated with the mutation. | str |
+| PMID | Refers to the PubMed ID of the associated research paper. | str |
+| Genome | Specifies the genome version used for mapping. | str |
+| Mutation Type | Describes the type of mutation. | str |
+| Chromosome | Represents the chromosome number where the mutation occurs. | str |
+| Start Position | Indicates the starting position of the mutation on the chromosome. | str |
+| End Position | Represents the ending position of the mutation on the chromosome. | str |
+| Reference Allele | Denotes the original allele at the mutation site. | str |
+| Mutant Allele | Represents the altered allele resulting from the mutation. | str  |
+| Method | Describes the method used for mutation detection. | str |
+
+
 
 ```python
 from sbsgenerator import generator
@@ -50,6 +65,8 @@ sbsgen = generator.SBSGenerator(
     ref_genome=ref_genome
 )
 sbsgen.count_mutations()
+# The attribute count_samples holds the sbs matrix
+sbsgen.count_samples
 ```
 
 ## Contributing
