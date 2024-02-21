@@ -133,6 +133,7 @@ fn read_vcf_file_contents(
             let mutation_type = fields[4];
             let reference_allele = fields[8];
             let alternate_allele = fields[9];
+            
 
             let translated_alternate: String = if (reference_allele == "A"
                 || reference_allele == "G")
@@ -149,17 +150,15 @@ fn read_vcf_file_contents(
                 .chars()
                 .map(|c| *translate_purine_to_pyrimidine.get(&c).unwrap_or(&c))
                 .collect();
-
+            let translate_complement = !(translated_alternate == alternate_allele);
             if (reference_genome == "GRCh37" || reference_genome == "GRCh38")
                 && (mutation_type == "SNP" || mutation_type == "SNV")
                 && nucleotides.contains(&alternate_allele)
                 && (translated_reference != translated_alternate)
             {
                 let position = fields[6].parse::<usize>().unwrap() - 1;
-                let start = position.saturating_sub(*context / 2);
-                let end = position + *context / 2 + 1;
                 let total_path = format!("{}/{}/{}.txt", ref_genome, reference_genome, fields[5]);
-                let (left, right) = read_bytes_file_contents(&total_path, start, end)?;
+                let (left, right) = read_bytes_file_contents(&total_path, position, context, translate_complement)?;
                 let sample = format!("{}::{}", fields[0], fields[1]);
                 let new_mutation_type = format!(
                     "{}[{}>{}]{}",
@@ -190,9 +189,12 @@ fn read_vcf_file_contents(
 /// Returns an I/O error if there is an issue reading the file
 fn read_bytes_file_contents(
     file_path: &str,
-    start: usize,
-    end: usize,
+    position: usize,
+    context: &usize,
+    translate_complement: bool,
 ) -> Result<(String, String), std::io::Error> {
+    let start = position.saturating_sub(*context / 2);
+    let end = position + *context / 2 + 1;
     let mut file = File::open(file_path)
         .map_err(|_| pyo3::exceptions::PyIOError::new_err("Failed to open the bytes file"))?;
     file.seek(SeekFrom::Start(start as u64)).map_err(|_| {
@@ -233,11 +235,36 @@ fn read_bytes_file_contents(
         .iter()
         .map(|&byte| translation_mapping.get(&byte).unwrap_or(&' ').to_owned())
         .collect();
-    let result_chars: Vec<char> = result.chars().collect();
+    let final_result = if translate_complement {
+        reverse_complement(&result)
+    } else {
+        result
+    };
+    let result_chars: Vec<char> = final_result.chars().collect();
     let left = result_chars[..middle_index].iter().collect::<String>();
     let right = result_chars[middle_index + 1..].iter().collect::<String>();
 
     Ok((left, right))
+}
+
+fn reverse_complement(nucleotide_str: &str) -> String {
+    let reversed = reverse_string(nucleotide_str);
+    let complemented: String = reversed.chars().map(complement).collect();
+    complemented
+}
+
+fn reverse_string(s: &str) -> String {
+    s.chars().rev().collect()
+}
+
+fn complement(nucleotide: char) -> char {
+    match nucleotide {
+        'A' => 'T',
+        'T' => 'A',
+        'G' => 'C',
+        'C' => 'G',
+        _ => nucleotide, // if not A, T, G, or C, return the same character
+    }
 }
 
 /// A Python module implemented in Rust.
